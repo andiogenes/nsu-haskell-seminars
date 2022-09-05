@@ -43,50 +43,18 @@
   %    \end{block}
   %\end{frame}
   \begin{frame}{Вводные данные о Haskell}
-      %\begin{itemize}
-      %    \item Назван в честь Хаскелла Карри, американского математика и логика
-      %    \item Первый релиз -- 1990 г.
-      %    \item Последний стандарт -- Haskell2010
-      %    \item Основная реализация -- Glasgow Haskell Compiler
-      %\end{itemize}
-      
-      \begin{block}{Язык}
-          \begin{itemize}
-              \item Функциональный
-                \begin{itemize}
-                    \item любая программа представлена комбинацией \textit{функций} (в математическом смысле)
-                \end{itemize}
-              \item Чистый
-                \begin{itemize}
-                    \item функции \textbf{детерминированные}\footnote{для заданных входных данных функция всегда возвращает одинаковый результат}
-                    \item функции не имеют \textbf{побочных эффектов}\footnote{не ссылаются на данные, значения которых могут измениться в процессе работы программы и не производит таких изменений}
-                \end{itemize}
-              \item Ленивый (по умолчанию)
-                \begin{itemize}
-                    \item \textit{aka} \textit{нестрогие вычисления}, \textit{отложенные вычисления}
-                    \item Вычисления производятся только по необходимости
-                \end{itemize}
-          \end{itemize}
-      \end{block}
-  \end{frame}
-  \begin{frame}{Вводные данные о Haskell}
-      \begin{block}{Типизация}
-          \begin{itemize}
-              \item Статическая
-                \begin{itemize}
-                    \item типы проверяются до исполнения программы
-                \end{itemize}
-              \item Сильная
-              \item Неявная
-                \begin{itemize}
-                    \item вывод типов
-                \end{itemize}
-          \end{itemize}
-      \end{block}
-      \begin{block}{Полиморфизм}
+      \begin{block}{Немного про язык}
         \begin{itemize}
-            \item параметрический
-            \item ad-hoc
+            \item Больше академический, чем промышленный
+                \begin{itemize}
+                    \item девиз -- ''avoid \textbf{success at all costs}''\footnote{пер. -- ''избегать успеха любой ценой''}
+                    \item или всё-таки ''\textbf{avoid success} at all costs''?
+                \end{itemize}
+            \item Назван в честь математика и логика Хаскелла Карри
+            \item Математическая база -- типизированное $\lambda$-исчисление 2-го порядка
+            \item Стандартизованный\footnote{см. \alert{\href{Haskell2010}{https://www.haskell.org/onlinereport/haskell2010/}}}, одна официальная реализация -- Glasgow Haskell Compiler
+            \item Компилируемый
+            \item Интерпретируемый
         \end{itemize}
       \end{block}
   \end{frame}
@@ -150,6 +118,54 @@
       \begin{block}{Hoogle (\url{hoogle.haskell.org})}
         \begin{itemize}
             \item Поисковый движок для кода на Haskell
+        \end{itemize}
+      \end{block}
+  \end{frame}
+    \begin{frame}{Вводные данные о Haskell}
+      %\begin{itemize}
+      %    \item Назван в честь Хаскелла Карри, американского математика и логика
+      %    \item Первый релиз -- 1990 г.
+      %    \item Последний стандарт -- Haskell2010
+      %    \item Основная реализация -- Glasgow Haskell Compiler
+      %\end{itemize}
+      
+      \begin{block}{Язык}
+          \begin{itemize}
+              \item Функциональный
+                \begin{itemize}
+                    \item любая программа представлена комбинацией \textit{функций} (в математическом смысле)
+                \end{itemize}
+              \item Чистый
+                \begin{itemize}
+                    \item функции \textbf{детерминированные}\footnote{для заданных входных данных функция всегда возвращает одинаковый результат}
+                    \item функции не имеют \textbf{побочных эффектов}\footnote{не ссылаются на данные, значения которых могут измениться в процессе работы программы и не производит таких изменений}
+                \end{itemize}
+              \item Ленивый (по умолчанию)
+                \begin{itemize}
+                    \item \textit{aka} \textit{нестрогие вычисления}, \textit{отложенные вычисления}
+                    \item Вычисления производятся только по необходимости
+                \end{itemize}
+          \end{itemize}
+      \end{block}
+  \end{frame}
+  \begin{frame}{Вводные данные о Haskell}
+      \begin{block}{Типизация}
+          \begin{itemize}
+              \item Статическая
+                \begin{itemize}
+                    \item типы проверяются до исполнения программы
+                \end{itemize}
+              \item Сильная
+              \item Неявная
+                \begin{itemize}
+                    \item вывод типов
+                \end{itemize}
+          \end{itemize}
+      \end{block}
+      \begin{block}{Полиморфизм}
+        \begin{itemize}
+            \item параметрический
+            \item ad-hoc
         \end{itemize}
       \end{block}
   \end{frame}

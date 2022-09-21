@@ -1,0 +1,68 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\metroset{numbering=fraction}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\title{Декларативное программирование}
+\subtitle{Семинар №3, группа 22215}
+\author{Завьялов А.А.}
+\date{19 сентября 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+  \addtocounter{framenumber}{1}
+  \begin{frame}{Как работают вызовы функций (в императивных языках)}
+    \begin{itemize}
+        \item \textit{Где-то} в памяти расположен \textit{стек вызовов}
+        \item При вызове функции: \begin{enumerate}
+            \item Вычисляются ее параметры
+            \item Значения параметров записываются в стек
+            \item В стек помещается адрес возврата
+            \item Управление передается исполняемой функции
+            \item Функция резервирует место под свои локальные переменные и, \textit{возможно}, возвращаемое значение
+            \item Функция работает
+            \item В случае \textit{return}:\begin{enumerate}
+                \item функция освобождает свой стековый кадр
+                \item Передает управление по адресу возврата
+            \end{enumerate} 
+        \end{enumerate}
+    \end{itemize}
+  \end{frame}
+  \begin{frame}{Стек вызовов и рекурсия}
+      \begin{itemize}
+          \item Стек имеет конечный размер (обычно 1MB, 8 MB)
+          \item Рекурсивно можно задать незавершимые вычисления
+          \item Каждый рекурсивный вызов приводит к росту стека
+          \item ?
+          \item \pause\alert{Stack Overflow}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Tail recursion to the rescue}
+    \begin{block}{Хвостовая рекурсия}
+        \begin{itemize}
+            \item Рекурсивный вызов -- последняя операция перед выходом из функции
+            \item Последняя операция $\rightarrow$ параметры и локальные переменные уже не используются
+            \item Можем заменить значения на стеке и передать управление функции без создания нового стекового кадра
+            \item Заменили рекурсию на \textit{GOTO}!
+        \end{itemize}
+    \end{block}
+  \end{frame}
+    \begin{frame}{Рекурсивные функции}
+    \begin{block}{Факториал}
+      $$ n! = \begin{cases}
+			1, & n = 0\\
+            n * (n - 1)!, & \text{иначе}
+		 \end{cases} $$
+	 \end{block}
+
+    \begin{block}{Числа Фибоначчи}
+        $$ F_0 = 1,~F_1 = 1, $$
+        $$F_n = F_n-1 + F_n-2, n \ge 2$$
+    \end{block}
+  \end{frame}
+  \begin{frame}{Домашняя работа №2}
+      \includegraphics[width=12cm]{media/wbrb}
+  \end{frame}
+  \section{Q\&A}
+\end{document}

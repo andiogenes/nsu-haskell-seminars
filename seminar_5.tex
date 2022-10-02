@@ -1,0 +1,161 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\metroset{numbering=fraction}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №5, группа 22215}
+\author{Завьялов А.А.}
+\date{3 октября 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+  \addtocounter{framenumber}{1}
+  \begin{frame}{Разминка}
+      \begin{block}{Очень простой определенный интеграл}
+      $$ \int_{0}^{42} 42 \,dx\ = 42 \int_{0}^{42} dx = 42 \cdot (x|_{x=42} - x|_{x=0}) = 42 \cdot (42 - 0) = 1764 $$
+      \end{block}
+      \begin{block}{K-комбинатор\only<4->{\footnote{\url{https://en.wikipedia.org/wiki/Combinatory_logic}}}\only<3->{ (функция \alert{Prelude.const})}}
+      
+        \texttt{}
+      
+        \texttt{\only<1-2>{k}\only<3->{\alert{const}} :: a -> b -> a}
+        
+        \texttt{\only<1-2>{k}\only<3->{\alert{const}} x y = x}
+      \end{block}
+      \begin{block}{Посчитать интеграл, используя функцию \texttt{integrate} из ДЗ №3}
+        \texttt{}
+      
+        \texttt{integrate \only<1>{\alert{???}}\only<2>{(k 42)}\only<3->{(const 42)} 0 42}
+      \end{block}
+  \end{frame}
+  \section{Списки в Haskell}
+  \begin{frame}{Списки в Haskell}
+      \texttt{Prelude> :info []}
+      
+      \pause
+      
+      \texttt{type [] :: * -> *}
+
+      \texttt{data [] a = [] | a : [a]}
+      
+      \pause 
+      \begin{itemize}
+          \item Список --- параметризованный тип данных;
+          \item \pause \textit{рекурсивный} тип данных;
+          \item \pause списком является:
+            \begin{itemize}
+                \item пустой список (\texttt{[]});
+                \item пара \texttt{x : xs}, где \texttt{x} (голова списка) --- значение типа \texttt{a}, \texttt{xs} (хвост списка) --- список элементов типа \texttt{a}, \texttt{(:)} --- \textit{конструктор} списка;
+            \end{itemize}
+          \item \pause \textit{гомогенная} структура данных.
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Почему списки \textit{так} устроены?}
+      \textbf{А вот в Python списки устроены совсем иначе! Почему создатели Haskell спроектировали основную структуру данных таким образом?}
+      
+      \pause
+      
+      \begin{itemize}
+          \item Списки в Haskell иммутабельные (неизменяемые), чисто функциональные\only<2->{\footnote{\href{https://mazdaywik.github.io/direct-link/4.pdf/pfds.pdf}{Chris Okasaki --- Purely Functional Data Structures, Cambridge University Press, 1998}}};
+          \item их удобно последовательно обрабатывать;
+          \item прозрачно определены\only<2->{\footnote{для каждой операции очевидна временная сложность и требуемый объём памяти;}} в терминах языка\only<2->{\footnote{для сравнения, операции над списками в Python -- \href{https://github.com/python/cpython/blob/main/Objects/listobject.c}{builtins}.}};
+          \item списки в Haskell могут быть \textit{бесконечными}.
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Базовые функции для работы со списками}
+      \begin{block}{Создание списков}
+        \begin{itemize}
+            \item \texttt{[]} --- пустой список;
+            \item \texttt{(:)} --- конструктор списка
+            \begin{itemize}
+                \item \textbf{Пример №1}: \texttt{1 : []} $\equiv$ \texttt{[1]};
+                \item \textbf{Пример №2}: \texttt{1 : 2 : 3 : []} $\equiv$ \texttt{[1, 2, 3]}.
+            \end{itemize}
+        \end{itemize}
+      \end{block}
+      \begin{block}{Разделение списков (на ''голову'' и ''хвост'')}
+        \begin{itemize}
+            \item \texttt{head} --- первый элемент списка (если список не пустой);
+            \item \texttt{tail} --- список без первого элемента (если список не пустой).
+        \end{itemize}
+      \end{block}
+  \end{frame}
+  \begin{frame}{Функции для работы со списками}
+      \begin{itemize}
+          \item \texttt{length xs} --- вычисляет длину списка \texttt{xs};
+          \item \texttt{reverse xs} --- возвращает новый список с элементами \texttt{xs} в обратном порядке;
+          \item \texttt{xs !! n} --- возвращает $n$-й элемент \texttt{xs} (''головной'' элемент списка доступен по индексу 0);
+          \item \texttt{l1 ++ l2} --- конкатенирует списки \texttt{l1, l2};
+          \item \texttt{take n xs} --- возвращает новый список, состоящий из первых $n$ элементов \texttt{xs};
+          \item \texttt{drop n xs} --- возвращает новый список без первых $n$ элементов \texttt{xs};
+          \item \texttt{splitAt n xs} --- возвращает \texttt{(take n xs,~drop n xs)};
+          \item \texttt{last xs,~init xs};
+          \item и многие другие... (Data.List, Hoogle it!)
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Сопоставление с образцом (pattern matching)}
+      \begin{block}{Определение}
+        \texttt{}
+      
+        Метод анализа и обработки структур данных в языках программирования, основанный на выполнении определённых инструкций в зависимости от совпадения исследуемого значения с тем или иным образцом (\href{https://ru.wikipedia.org/wiki/Сопоставление_с_образцом}{Википедия}).
+      \end{block}
+      \begin{itemize}
+          \item Туториал --- \url{https://www.haskell.org/tutorial/patterns.html};
+          \item формальное определение --- \url{https://www.haskell.org/onlinereport/exps.html\#pattern-matching}.
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{99 Prolog/Lisp/Haskell/[Sample Language] Problems}
+      \begin{itemize}
+          \item Исходная версия для Prolog --- \url{https://www.ic.unicamp.br/~meidanis/courses/mc336/2009s2/prolog/problemas/};
+          \item версия для Lisp ---
+          \url{https://www.ic.unicamp.br/~meidanis/courses/mc336/problemas-lisp/L-99_Ninety-Nine_Lisp_Problems.html};
+          \item версия для Haskell --- \url{https://wiki.haskell.org/H-99:_Ninety-Nine_Haskell_Problems}.
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Функции высшего порядка для работы со списками}
+      \begin{block}{Три кита}
+      \begin{itemize}
+          \item \texttt{map}
+          \item \texttt{filter}
+          \item \texttt{reduce}
+      \end{itemize}
+      \end{block}
+      \begin{block}{И др.}
+      \begin{itemize}
+          \item \texttt{zipWith,~find,~concatMap}, $\cdots$
+      \end{itemize}
+      \end{block}
+      \begin{block}{Значимость?..}
+        \texttt{}
+      
+        MapReduce, Java Stream API, LINQ (C\#), \texttt{functools} (Python 3), Kotlin, JavaScript, \textit{etc}
+      \end{block}
+  \end{frame}
+  \begin{frame}{Бесконечные списки}
+      \begin{block}{Функции из модуля \texttt{Data.List}}
+        \begin{itemize}
+            \item iterate
+            \item repeat
+            \item cycle
+        \end{itemize}
+      \end{block}
+      \pause
+      \begin{center}
+          \textbf{Но как это работает?}
+      \end{center}
+  \end{frame}
+  \begin{frame}{Немного про списковые включения\footnote{\url{https://wiki.haskell.org/List_comprehension}}}
+      \begin{itemize}
+          \item Позволяют обрабатывать сразу несколько списков;
+          \item поддерживают сторожевые выражения (guards).
+      \end{itemize}
+      \begin{center}
+          \textbf{\only<1>{Но как это работает?}\only<2->{Но как это работает? Узнаем позже!}}
+      \end{center}
+  \end{frame}
+  \section{Домашняя работа №4}
+  \section{Q\&A}
+\end{document}

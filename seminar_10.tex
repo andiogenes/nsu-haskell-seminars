@@ -1,0 +1,228 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\metroset{numbering=fraction}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №10, группа 22215}
+\author{Завьялов А.А.}
+\date{7 ноября 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+  \begin{frame}[fragile]{Можно ли перечислить пару перечислимых значений?}
+      \begin{minted}{haskell}
+instance (Enum a, Enum b) => Enum (a, b) where
+    toEnum n = (toEnum n, toEnum n)
+    fromEnum (a, b) = ???
+      \end{minted}
+      \begin{block}{Ожидаемое поведение}
+      \begin{minted}{haskell}
+GHCI> [(1,2)..(3,4)]
+[(1,2),(2,3),(3,4)]
+      \end{minted}
+      \end{block}
+  \end{frame}
+  \section{Знакомство с монадами}
+  \begin{frame}[fragile]{Знакомые нам виды вычислений}
+      \begin{itemize}
+          \item Применение функции к аргументу (аргументам):
+          \begin{itemize}
+              \item \hs{f :: a -> b, x :: a} $\Rightarrow$ \hs{f $ x :: b}
+              \item \hs{g :: a -> b -> c, x :: a, y :: b} $\Rightarrow$ \hs{g $ x y :: c}
+          \end{itemize}
+          \item Применение функции к аргументу в контексте:
+          \begin{itemize}
+              \item \hs{f :: a -> b, x ::} \bhs{a} $\Rightarrow$ \hs{f <$> x ::} \bhs{b}
+              \item \hs{f :: a -> b} $\Rightarrow$ \hs{fmap f ::} \bhs{a} \hs{->} \bhs{b}
+          \end{itemize}
+          \item Применение функции \textit{в контексте} к аргументу в контексте:
+          \begin{itemize}
+              \item \hs{g ::} \bhs{a -> b}, \hs{x ::} \bhs{a} $\Rightarrow$ \hs{g <*> x ::} \bhs{b}
+              \item Применение бинарной операции к операндам в контексте:
+                  \hs{h :: a -> b -> c, x ::} \bhs{a}, \hs{y :: } \bhs{b} \Rightarrow \hs{liftA2 h x y ::} \bhs{c}
+          \end{itemize}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}[fragile]{Незнакомые нам виды вычислений}
+      \begin{itemize}
+          \item \hs{k :: a ->} \bhs{b}, \hs{x ::} \bhs{a} \Rightarrow \hs{k}~ \alert{\texttt{???}}~\hs{x ::}~\bhs{b}
+      \end{itemize}
+      \begin{block}{Пример}
+      \begin{minted}{haskell}
+safeHead :: [a] -> Maybe a
+safeHead [] = Nothing
+safeHead (x:_) = Just x
+
+safeTail :: [a] -> Maybe [a]
+safeTail [] = Nothing
+safeTail (_:xs) = Just xs
+
+safeSecond :: [a] -> Maybe a
+safeSecond = ??? safeTail ??? safeHead
+      \end{minted}
+      \end{block}
+  \end{frame}
+  \begin{frame}[fragile]{Класс типов \texttt{Monad}}
+      \begin{minted}{haskell}
+class Applicative m => Monad m where
+    {-# MINIMAL (>>=) #-}
+    (>>=)       :: m a -> (a -> m b) -> m b
+    (>>)        :: m a -> m b -> m b
+    return      :: a -> m a
+infixl 1 >>, >>=
+    
+>safeSecond xs = safeTail xs >>= safeHead
+>safeSecond [1] = Nothing
+>safeSecond [1,2] = Just 2
+      \end{minted}
+      \begin{itemize}
+          \item Функции типа \hs{a -> m a} называются \textit{стрелками Клейсли}
+          \item \hs{(>>=)} (читается ''bind'') называется \textit{оператором монадического связывания}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}[fragile]{Функция \texttt{return :: a -> m a}}
+      \begin{itemize}
+          \item Определяет тривиальную стрелку Клейсли
+          \item \hs{return = pure}
+      \end{itemize}
+      \begin{minted}{haskell}
+toKleisli :: Monad m => (a -> b) -> (a -> m b)
+toKleisli f = \x -> return (f x)
+
+>:t toKleisli (*2)
+toKleisli (*2) :: (Monad m, Num a) => a -> m a
+>(toKleisli (*2) 2) :: Maybe Int
+Just 4
+>(toKleisli (*2) 2) :: [Int]
+[4]
+>return 42 :: [Int]
+[42]
+      \end{minted}
+  \end{frame}
+  \begin{frame}[fragile]{Оператор \texttt{(>{}>) :: m a -> m b -> m b}}
+      \begin{itemize}
+          \item Определён по умолчанию:
+           
+           \hs{m >> k = m >>= \_ -> k}
+           \item Если \hs{m} породило значение, отбрасывает \hs{m}, возвращает \hs{k}
+      \end{itemize}
+      \metroset{block=fill}
+      \begin{block}{Пример}
+      \begin{minted}{haskell}
+>Just 1 >> Just 2
+Just 2
+>Nothing >> Just 2
+Nothning
+>[1] >> [2]
+[2]
+>[] >> [2]
+[]
+      \end{minted}
+      \end{block}
+  \end{frame}
+  \begin{frame}[fragile]{Другие полезные функции для работы с монадами}
+      \begin{itemize}
+          \item \hs{(>=>) :: Monad m => (a -> m b) -> (b -> m c)} \hs{-> a -> m c},
+           композиция стрелок Клейсли
+           \item \hs{(<=<) :: Monad m => (b -> m c) -> (a -> m b)} \hs{-> a -> m c}
+           \item \hs{(=<<) :: Monad m => (a -> m b) -> m a -> m b}
+            
+           \hs{(=<<) = flip (>>=)}
+      \end{itemize}
+      \metroset{block=fill}
+      \begin{block}{Пример}
+     \begin{minted}{haskell}
+ safeSecond = safeTail >=> safeHead
+     \end{minted}
+     \end{block}
+  \end{frame}
+  \begin{frame}{Законы класса типов \texttt{Monad}\footnote{англ. -- monadic laws}}
+      Для любого представителя \texttt{Monad} должны выполняться следующие свойства:
+      \begin{itemize}
+          \item \hs{return a >>= k = k a}
+          \item \hs{m >>= return = m}
+          \item \textbf{Ассоциативность} \hs{m >>= (\x -> k x >>= h) = (m >>= k) >>= h}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}[fragile]{Законы класса типов \texttt{Monad}}\metroset{block=fill}
+      \begin{block}{Композиция Клейсли}
+      \begin{minted}{haskell}
+infixr 1 >=>
+(>=>) :: Monad m => (a -> m b)->(b -> m c)->(a -> m c)
+f >=> g =  \x -> f x >>= g
+      \end{minted}
+      \end{block}
+      Выразим свойства через композицию стрелок:
+      \begin{itemize}
+          \item \hs{return >=> h = h}
+          \item \hs{f >=> return = f}
+          \item \textbf{Ассоциативность}
+          
+          \hs{(f >=> g) >=> h = f >= (g >= h)}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{\texttt{do}-нотация}\metroset{block=fill}
+      Синтаксический сахар для упрощенной записи цепочек \textit{монадических вычислений}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\begin{block}{do-нотация}
+\hs{do { e1; e2 }} 
+\end{block}
+\begin{block}{do-нотация}
+\hs{do { p <- e1; e2 }}
+\end{block}
+\begin{block}{do-нотация}
+\hs{do { let v = e1; e2 }} 
+\end{block}
+\end{column}
+\begin{column}{0.5\textwidth}
+\begin{block}{Обычный синтаксис}
+\hs{e1 >> e2}
+\end{block}
+\begin{block}{Обычный синтаксис}
+\hs{e1 >>= \p -> e2}
+\end{block}
+\begin{block}{Обычный синтаксис}
+\hs{let v = e1 in do e2}
+\end{block}
+\end{column}
+\end{columns}
+  \end{frame}
+  \begin{frame}[fragile]{Пример использования \texttt{do}-нотации}
+\begin{columns}
+\begin{column}{0.475\textwidth}
+  \begin{minted}{haskell}
+safeSecond xs = do
+  x <- safeTail xs
+  y <- safeHead x
+  return y
+\end{minted}
+\end{column}
+\begin{column}{0.05\textwidth}
+  $\equiv$
+\end{column}
+\begin{column}{0.475\textwidth}
+  \begin{minted}{haskell}
+safeSecond xs = 
+  safeTail xs >>= (\x ->
+  safeHead x >>= (\y ->
+  return y))
+\end{minted}
+\end{column}
+\end{columns}
+  \end{frame}
+\begin{frame}{Домашнее задание}
+    \begin{itemize}
+        \item Реализовать функции \hs{fmap, pure, (<*>)} с помощью \hs{return, (>>=)}
+    \end{itemize}
+\end{frame}
+  \section{Q\&A}
+\end{document}

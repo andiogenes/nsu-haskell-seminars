@@ -1,0 +1,287 @@
+\documentclass{beamer}
+\usetheme{metropolis}           % Use metropolis theme
+\metroset{numbering=fraction}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №12, группа 22215}
+\author{Завьялов А.А.}
+\date{21 ноября 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+  \begin{frame}[fragile]{Глубокий смысл монадического связывания}
+    \begin{minted}{haskell}
+class Applicative m => Monad m where
+    -- `bind`, оператор монадического связывания
+    (>>=)       :: m a -> (a -> m b) -> m b
+    (>>)        :: m a -> m b -> m b
+    return      :: a -> m a
+      \end{minted}
+      \begin{block}{Монадические законы}
+        \begin{itemize}
+          \item \hs{return a >>= k} $\equiv$ \hs{k a}
+          \item \hs{m >>= return} $\equiv$ \hs{m}
+          \item \textbf{Ассоциативность}\linebreak
+                \hs{m >>= (\x -> k x >>= h)} $\equiv$ \hs{(m >>= k) >>= h}
+      \end{itemize}
+      \end{block}
+  \end{frame}
+  \begin{frame}[fragile]{Глубокий смысл монадического связывания}
+      \begin{itemize}
+          \item Что такое связывание (обычное)?
+          \item Связывание значения с именем
+      \end{itemize}
+      \begin{columns}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr :: Double
+expr =
+  let a = 10
+      b = 20
+      c = 30
+      d = 40
+  in a + b * c / d
+\end{minted}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr' :: Double
+expr' =
+  (\a ->
+   \b ->
+   \c ->
+   \d ->
+     a + b * c / d)
+  10 20 30 40
+\end{minted}
+        \end{column}
+      \end{columns}
+  \end{frame}
+  \begin{frame}[fragile]{Глубокий смысл монадического связывания}
+      \begin{itemize}
+          \item А теперь через монаду Identity
+          \item Она очень простая -- не делает \textit{ничего}
+      \end{itemize}
+      \begin{columns}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr' =
+  (\a ->
+   \b ->
+   \c ->
+   \d ->
+     a + b * c / d)
+  10 20 30 40
+\end{minted}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr'' =
+  runIdentity $
+    return 10 >>= \a ->
+    return 20 >>= \b ->
+    return 30 >>= \c ->
+    return 40 >>= \d ->
+      return a + b * c / d
+\end{minted}
+        \end{column}
+      \end{columns}
+  \end{frame}
+  \begin{frame}[fragile]{Глубокий смысл монадического связывания}
+      \begin{itemize}
+          \item А теперь через do-нотацию
+      \end{itemize}
+      \begin{columns}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr'' =
+  runIdentity $
+    return 10 >>= \a ->
+    return 20 >>= \b ->
+    return 30 >>= \c ->
+    return 40 >>= \d ->
+      return a + b * c / d
+\end{minted}
+        \end{column}
+        \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+expr''' =
+  runIdentity $ do
+     a <- return 10
+     b <- return 20
+     c <- return 30
+     d <- return 40
+     return a + b * c / d
+\end{minted}
+        \end{column}
+      \end{columns}
+\end{frame}
+  \section{Вычислительные эффекты}
+\begin{frame}{Что такое вычислительный эффект}
+    \begin{block}{Свойства чистых функций}
+      \begin{itemize}
+          \item \textbf{Полная определённость (тотальность)} -- даёт ответ для любого значения аргумента
+          \item \textbf{Детерминированность} -- для заданных входных данных функция всегда возвращает одинаковый результат
+          \item \textbf{Отсутствие побочных эффектов} -- не ссылаются на данные, значения которых могут измениться в процессе работы программы и не производит таких изменений
+      \end{itemize}
+    \end{block}
+    \textbf{Вычислительный эффект} --- любое действие, нарушающее свойства чистых функций
+\end{frame}
+\begin{frame}{Какие бывают вычислительные эффекты}
+    \begin{itemize}
+        \item \textbf{Частичность} -- функция не определена для каких-либо значений аргумента (не возвращает значения для него, т.е. \textit{не завершается})
+        \item \textbf{Недетерминированность}
+          \begin{itemize}
+              \item \textbf{Нестабильность} -- функция не всегда возвращает одинаковые значения для одного значения аргумента
+              \item \textbf{Множественность} -- функция возвращает сразу несколько ответов
+          \end{itemize}
+        \item \textbf{Побочный эффект} -- функция не только возвращает результат, но и делает \textit{что-то ещё}
+    \end{itemize}
+\end{frame}
+\section{Эффекты в Haskell}
+\begin{frame}[fragile]{Эффект частичности}
+\only<2>{\textbf{Maybe!}}
+    \begin{columns}
+      \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+f :: Double -> Double
+f d =
+  let a = 10
+      b = 20
+      c = 30
+  in a + b * c / d
+
+>f 0
+Infinity
+\end{minted}
+      \end{column}
+      \begin{column}{0.5\textwidth}
+      \pause
+\begin{minted}{haskell}
+f :: Double -> Maybe Double
+f d =
+  let a = 10
+      b = 20
+      c = 30
+  in if (abs d < 0.0001)
+     then Nothing
+     else
+       Just (a + b * c / d)
+>f 0
+Nothing
+>f 1
+Just 610.0
+\end{minted}      
+      \end{column}
+    \end{columns}
+\end{frame}
+\begin{frame}[fragile]{Эффект частичности}
+    \begin{columns}
+      \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+f :: Double -> Maybe Double
+f d =
+  let a = 10
+      b = 20
+      c = 30
+  in if (abs d < 0.0001)
+     then Nothing
+     else
+       Just (a + b * c / d)
+\end{minted}
+      \end{column}
+      \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+f :: Double -> Maybe Double
+f d = do
+  guard (abs d >= 0.0001)
+  let a = 10
+      b = 20
+      c = 30
+  return $ a + b * c / d
+\end{minted}      
+      \end{column}
+    \end{columns}
+\end{frame}
+\begin{frame}[fragile]{\texttt{Maybe} как монада}
+Реализуется достаточно просто:
+\begin{minted}{haskell}
+instance Monad Maybe where
+  return = Just
+  
+  Nothing >>= _ = Nothing
+  (Just x) >>= f = f x
+  
+  (Just _) >> a = a
+  Nothing >> _ = Nothing
+\end{minted}
+\end{frame}
+\begin{frame}{Эффект множественности}
+    \begin{itemize}
+        \item Квадратное уравнение может иметь два корня, один корень, не иметь корней
+        \item \only<1>{\hs{solver :: Double -> Double -> Double -> ?}}
+              \only<2>{\hs{solver :: Double -> Double -> Double -> [Double]}}
+    \end{itemize}
+\end{frame}
+\begin{frame}[fragile]{Список как монада}
+Определяется следующим образом:
+\begin{minted}{haskell}
+instance Monad [] where
+  return x = [x]
+  xs >>= k = concat (map k xs)
+\end{minted}
+\end{frame}
+\begin{frame}[fragile]{Связь монады списка и list comprehension}
+Следующие выражения эквивалентны:
+    \begin{columns}
+      \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+triples =
+  [(x,y,z) |
+   x <- [1..10],
+   y <- [1..10],
+   z <- [1..10],
+   x^2 + y^2 == z^2]
+\end{minted}
+      \end{column}
+      \begin{column}{0.5\textwidth}
+\begin{minted}{haskell}
+triples = do
+  x <- [1..10]
+  y <- [1..10]
+  z <- [1..10]
+  guard $ x^2 + y^2 == z^2
+  return (x, y, z)
+\end{minted}
+      \end{column}
+    \end{columns}
+\end{frame}
+\begin{frame}{Ввод-вывод}
+    \begin{itemize}
+        \item Частичный (файл может отсутствовать, прочитали до EOF)
+        \item Недетерминированный (файл может измениться)
+        \item Имеет побочные эффекты (печать в файл)
+    \end{itemize}
+    \pause
+    \begin{center}
+        \textbf{Нечистый!} 
+        
+        \pause Но такой нужный...
+    \end{center}
+\end{frame}
+\begin{frame}{Что почитать}
+    \begin{itemize}
+        \item \url{https://ruhaskell.org/posts/theory/2018/01/10/effects.html}
+        \item \url{https://ruhaskell.org/posts/theory/2018/01/18/effects-haskell.html}
+    \end{itemize}
+\end{frame}
+  \section{Q\&A}
+\end{document}

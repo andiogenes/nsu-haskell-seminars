@@ -1,0 +1,240 @@
+\documentclass{beamer}
+\usetheme{metropolis}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №13, группа 22215}
+\author{Завьялов А.А.}
+\date{28 ноября 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+\begin{frame}{Вычислительные эффекты}
+   \begin{block}{Что такое}
+   \vspace{2px}
+      Если функция не просто переводит одно значение в другое, но \textit{делает что-то} ещё
+      или \textit{по-особому} работает, говорят, что она содержит некоторый \textbf{вычислительный эффект}
+   \end{block}
+   \begin{block}{Какие бывают}
+    \begin{itemize}
+        \item Частичность \only<2->{-- \texttt{Maybe} \only<4->{(и не только)}}
+        \item Недетерминированность
+          \begin{itemize}
+              \item \only<1-4>{Нестабильность}\only<5>{\alert{Нестабильность}}
+              \item Множественность \only<3->{-- \only<3-4>{\texttt{[]}}\only<5>{\alert{\texttt{[]}}} \only<4->{(и не только)}}
+          \end{itemize}
+        \item \only<1-4>{Побочный эффект}\only<5>{\alert{Побочный эффект}}
+    \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Монада списка и динамическое программирование}
+    Определите функцию \hs{permutations :: [a] -> [[a]]}, которая возвращает все перестановки, которые можно получить из данного списка, в любом порядке.
+    \pause
+    \begin{block}{Перестановки разной степени сложности}
+     \begin{itemize}
+         \item перестановки пустого списка -- пустой список;
+         \item перестановки одноэлементного списка -- тот же самый список;
+         \item перестановки списка \hs{[x, y]} -- список \hs{[[x, y], [y,x]]};
+         \item перестановки списка \hs{[x1, x2, ..., xn]} -- перестановки \hs{[x2, ..., xn]} с добавленным в начало \hs{x1}, а также перестановки \hs{[x1, x3, ..., xn]} с добавленным в начало \hs{x2} и т.д...
+     \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}[fragile]{Сопоставление с образцом в монадах и \texttt{MonadFail}}
+    \begin{columns}
+    \begin{column}{0.5\textwidth}
+\textbf{Переводчик на собачий язык}
+    \begin{minted}{haskell}
+dogefier :: 
+  Maybe String -> Maybe String
+dogefier (Just "hello") = 
+  Just $ "henlo"
+    \end{minted}
+    
+\textbf{Что выведет интерпретатор?}
+\begin{minted}{haskell}
+> dogefier $ return "hello"
+\end{minted}
+\begin{minted}{haskell}
+> dogefier $ return "привет"
+\end{minted}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+    \begin{figure}
+        \centering
+        \includegraphics[scale=0.3]{media/henlo.png}
+    \end{figure}
+    \end{column}
+    \end{columns}
+    \only<2>{\begin{center}
+        \textbf{Попробуем исправить}
+    \end{center}}
+\end{frame}
+\begin{frame}[fragile]{Метод \texttt{fail} и \texttt{do}-нотация}
+    \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Выражения вида}
+      
+      \begin{minted}{haskell}
+do { Just x1 <- action1
+   ; x2      <- action2
+   ; mk_action3 x1 x2 }
+      \end{minted}
+      \end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Превращаются в}
+      
+      \begin{minted}{haskell}
+action1 >>= f
+where f (Just x1) = 
+  do { x2 <- action2
+     ; mk_action3 x1 x2 }
+      
+      f _ = fail "..."
+      \end{minted}
+      \end{block}
+    \end{column}
+    \end{columns}
+    \begin{itemize}
+        \item Работает для всех монад, реализующих класс типов \texttt{MonadFail} (содержит метод \texttt{fail})
+        \item \hs{fail :: Maybe a} $\equiv$ \hs{Nothing}
+        \item \hs{fail :: [a]} $\equiv$ \hs{[]}
+    \end{itemize}
+\end{frame}
+\begin{frame}[fragile]{Глубокий смысл \texttt{fail} для монады списка}
+    \begin{columns}
+    \begin{column}{0.4\textwidth}
+\begin{block}{Выражение}
+\begin{minted}{haskell}
+evens =
+ [x |
+  x <- [1..],
+  x `mod` 2 == 0]
+\end{minted}
+\end{block}
+    \end{column}
+    \begin{column}{0.6\textwidth}
+\begin{block}{Эквивалентно следующему}
+\begin{minted}{haskell}
+evens = do
+  x <- [1..]
+  True <- return x `mod` 2 == 0
+  return x
+\end{minted}
+\end{block}
+    \end{column}
+    \end{columns}
+    \begin{itemize}
+        \item Позволяет избавляться от ненужных значений;
+        \item \texttt{guard} делает похожую работу, но:
+          \begin{itemize}
+              \item мы пока не знаем, как работает \texttt{guard};
+              \item мы уже знаем, как работает паттерн-матчинг и \texttt{fail}.
+          \end{itemize}
+    \end{itemize}
+\end{frame}
+\begin{frame}[fragile]{Эффект нестабильности}
+    Если ваша функция \hs{f :: a -> b} возвращает разные значения при одинаковом значении аргумента, значит она зависит от скрытого параметра.
+    \pause\newline\newline
+    Чистые функции не зависят от скрытых изменяющихся переменных. Нестабильность можно
+    выразить, сделав зависимость явной:
+\begin{minted}{haskell}
+    f' :: a -> r -> b
+\end{minted}
+    \pause
+    Можем дать \hs{e -> b} псевдоним:
+\begin{minted}{haskell}
+    type Reader r b = r -> b
+    f' :: a -> Reader r b
+\end{minted}
+\end{frame}
+\begin{frame}[fragile]{Монада \texttt{Reader}}
+\begin{block}{Определение}
+\begin{minted}{haskell}
+newtype Reader r a = Reader { runReader :: r -> a }
+
+instance Monad (Reader r) where
+  return a = Reader $ \_ -> a
+  -- Передаёт окружение в оба вычисления
+  m >>= k = Reader $ \r -> let v = runReader m r
+                           in runReader (k v) r
+\end{minted}
+\end{block}
+\begin{block}{Полезные функции}
+\begin{itemize}
+    \item \hs{ask = Reader id :: Reader a a}
+    \item \hs{asks f = Reader f :: (r -> a) -> Reader r a}
+    \item \hs{local :: (r -> r) -> Reader r a -> Reader r a}
+    
+          \hs{local f m = Reader $ runReader m . f}
+\end{itemize}
+\end{block}
+\end{frame}
+\begin{frame}[fragile]{Побочный эффект}
+    Если ваша функция \hs{f :: a -> b} не только возвращает значение, но и делает что-то ещё (например, изменяет глобальную переменную), значит, она имеет побочный эффект.
+    \pause\newline\newline
+    Чистые функции не могут сделать ничего, кроме подсчета единственного возвращаемого значения. Побочный эффект можно выразить, сделав побочный эффект частью результата функции:
+\begin{minted}{haskell}
+    f' :: a -> (b, s)
+\end{minted}
+\pause
+Можем сделать \hs{(b,s)} осмысленным типом:
+\begin{minted}{haskell}
+    newtype Putter s b = Putter (b, s)
+    f' :: a -> Putter s b
+\end{minted}
+\end{frame}
+\begin{frame}[fragile]{Монада \texttt{Writer}}
+\begin{block}{Определение}
+\begin{minted}{haskell}
+newtype Writer w a = Writer { runWriter :: (a, w) }
+
+instance Monoid w => Monad (Writer w) where
+  return x = Writer (x, mempty)
+  Writer (x,v) >>= f = let (Writer (y, v')) = f x
+                       in Writer (y, v `mappend` v')
+\end{minted}
+\end{block}
+\begin{block}{Полезные функции}
+\begin{itemize}
+    \item \hs{tell :: Monoid w => w -> Writer w ()}
+    \item \hs{execWriter :: Writer w a -> w}
+\end{itemize}
+\end{block}
+\end{frame}
+\begin{frame}{Что почитать}
+    \begin{itemize}
+        \item \url{https://ruhaskell.org/posts/theory/2018/01/10/effects.html}
+        \item \url{https://ruhaskell.org/posts/theory/2018/01/18/effects-haskell.html}
+    \end{itemize}
+\end{frame}
+  \section{Q\&A}
+  \appendix
+  \begin{frame}[fragile]{Монада \texttt{State}}
+\begin{minted}{haskell}
+newtype State s a = State { runState :: s -> (a,s) }
+
+instance Monad (State s) where
+  -- return :: a -> State s a
+  return x = State $ \s -> (x, s)
+  -- (>>=) :: State s a -> (a -> State s b) -> State s b
+  State act >>= f = State $ \s ->
+    let (a, s') = act s
+    in runState (k a) s'
+\end{minted}
+\begin{block}{Полезные функции}
+\begin{itemize}
+    \item \hs{get       :: State s s}
+    \item \hs{put       :: s -> State s ()}
+    \item \hs{modify    :: (s -> s) -> State s ()}
+\end{itemize}
+\end{block}
+  \end{frame}
+\end{document}

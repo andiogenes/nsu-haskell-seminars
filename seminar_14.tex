@@ -1,0 +1,138 @@
+\documentclass{beamer}
+
+% Theme and customization
+\usetheme{metropolis}
+%\metroset{progressbar=foot}
+
+% Define colors
+\definecolor{magic}{RGB}{94, 81, 132}
+\definecolor{darkmagic}{RGB}{82, 70, 115}
+
+% Set theme colors
+\setbeamercolor{normal text}{fg=magic}
+\setbeamercolor{alerted text}{fg=darkmagic}
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{~~~~\includegraphics[scale=0.5]{media/harry-potter-title.pdf}}
+\subtitle{~~~~~~~~~~~~~~~~~~~~~~~~~~и Функция-полукровка}
+\author{Завьялов А.А.}
+\date{5 декабря 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+  \begin{frame}[fragile]{Проблемы с вводом-выводом}
+\begin{itemize}
+    \item Все функции в Haskell -- чистые
+    \item Хотим работать с вводом-выводом (потенциально "грязными операциями)
+    \item \hs{getCharFromConsole :: Char} должна \textbf{всегда} возвращать одно и то же
+    \pause
+    \item \hs{getCharFromConsole :: RealWorld -> (RealWorld, Char)} всегда даёт одинаковый
+    ответ при одинаковом состоянии \hs{RealWorld}
+    \item Окружающий мир непрерывно изменяет свое состояние
+    \item Невозможно или тяжело отследить и локализовать изменения
+    \item Нужно ограничивать доступ к \hs{RealWorld}
+    \pause
+    \item \hs{getChar :: IO Char}. \pause \hs{IO}?
+\end{itemize}
+  \end{frame}
+  \begin{frame}{Что такое \texttt{IO}?}
+      \begin{itemize}
+          \item Тип \hs{IO a} говорит нам -- "во время вычисления значения типа \hs{a} может случиться операция ввода-вывода"
+          \item \hs{IO} приблизительно определяется как:
+                \hs{newtype IO a = IO (RealWorld -> (RealWorld, a))}
+           \item Документация говорит: "RealWorld is \textbf{deeply magical}"
+           \item Значениями \hs{RealWorld} нельзя манипулировать, он существует только
+           на уровне системы типов
+           \pause
+           \item Говорят, что выражения с \hs{IO a} это не функции\pause, а \textbf{действия ввода вывода} (IO actions)
+      \end{itemize}
+  \end{frame}
+  \begin{frame}[fragile]{Монада \texttt{IO}}
+    \hs{IO} можно примерно определить как
+
+\begin{minted}{haskell}
+instance Monad IO where
+  return x = IO $ \w -> (w, x)
+  m >>= k = IO $ \w ->
+    case m w of
+      (w', a) -> k a w'
+\end{minted}
+
+\begin{block}{Что важно}
+    \begin{itemize}
+        \item Нельзя достать значения из \hs{IO}
+        \item Побочный эффект (операция ввода-вывода) действия происходит один раз
+        \item Побочные эффекты происходят в заданном порядке
+    \end{itemize}
+\end{block}
+  \end{frame}
+\begin{frame}{Основные функции консольного ввода-вывода}
+    \begin{itemize}
+        \item Ввод
+        \begin{itemize}
+            \item \hs{getChar :: IO Char}
+            \item \hs{getLine :: IO String}
+            \item \hs{getContents :: IO String}
+        \end{itemize}
+    \item Вывод
+    \begin{itemize}
+        \item \hs{putChar :: Char -> IO ()}
+        \item \hs{putStr, putStrLn :: String -> IO ()}
+        \item \hs{print :: Show a => a -> IO ()}
+    \end{itemize}
+    \item Ввод-вывод
+    \begin{itemize}
+        \item \hs{interact :: (String -> String) -> IO ()}
+    \end{itemize}
+    \end{itemize}
+\end{frame}
+\begin{frame}{Модуль \texttt{System.Random}}
+    \begin{itemize}
+        \item Вообще-то, генераторы псевдослучайных чисел не зависят от \textit{окружающего мира}
+        \pause\item Но могут...
+        \pause\item Это делает \textit{некоторые} генераторы действиями ввода-вывода
+    \end{itemize}
+    \pause
+    \begin{block}{Установка \texttt{System.Random}}
+    \vspace{5px}
+        \mintinline{bash}{$ cabal install --lib random}
+    \end{block}
+    \pause\begin{block}{Полезные функции}
+        \begin{itemize}
+            \item \hs{randomIO :: (Random a, MonadIO m) => m a}
+            \item \hs{randomRIO :: (Random a,MonadIO m)=>(a,a)->m a}
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Полезные функции для работы с монадами}
+    Эти функции определены для \textbf{любых} монад, не только \hs{IO}
+
+    \begin{itemize}
+    \item \hs{mapM :: (Traversable t, Monad m) =>} \hs{(a -> m b) -> t a -> m (t b)}
+    \item \hs{forM :: (Traversable t, Monad m) =>} \hs{t a -> (a -> m b) -> m (t b)}
+    \item \hs{sequence :: (Traversable t, Monad m)} \hs{=> t (m a) -> m (t a)}
+    \end{itemize}
+    Есть версии, возвращающие \hs{m ()}:  \texttt{mapM\_, forM\_, sequence\_}
+  \end{frame}
+  \begin{frame}{Тёмные искусства -- изменяемые ссылки}
+      \begin{itemize}
+          \item \textbf{Не повторяйте этого дома}
+          \item \hs{import Data.IORef (newIORef,readIORef,writeIORef)}
+      \end{itemize}
+  \end{frame}
+  \begin{frame}{Темнейшее волшебство}
+      \begin{itemize}
+          \item \textbf{Не стоит вам этим пользоваться. \underline{Никогда.}}
+          \pause\item \hs{import System.IO.Unsafe}
+      \end{itemize}
+  \end{frame}
+  \section{Q\&A}
+\end{document}

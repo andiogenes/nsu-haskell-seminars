@@ -1,0 +1,153 @@
+\documentclass{beamer}
+\usetheme{metropolis}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №16, группа 22215}
+\author{Завьялов А.А.}
+\date{19 декабря 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+\section{А что в других языках?}
+\begin{frame}{Чистые функции}
+    \begin{itemize}
+        \item \only<1>{Детерминированные}\only<2->{\textbf{Детерминированные}}
+        \item \only<1>{Без побочных эффектов}\only<2->{\textbf{Без побочных эффектов}}
+        \item \pause Гарантии!
+        \item \pause Можно написать на любом современном языке
+    \end{itemize}
+\end{frame}
+\begin{frame}{Функции}
+    \begin{block}{Функции высшего порядка}
+    \begin{itemize}
+        \item Может принимать функцию в качестве аргумента
+        \item Или возвращать функцию в качестве результата
+        \item Пример: \hs{map :: (a -> b) -> [a] -> [b]}
+    \end{itemize}
+    \end{block}
+    \begin{block}{Функции как объекты первого класса}
+        \begin{itemize}
+            \item \textit{Можно передавать в другие функции}
+            \item \textit{Возвращать в качестве результата}
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item В языках с поддержкой анонимных функций
+            \item В Cи? \textbf{Нет!}
+            \item В С++? \textbf{Да!} (А также в Java, C\#, Python и т.д.)
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Композиция функций}
+    \begin{block}{Пример использования}
+        \begin{itemize}
+            \item Обработка коллекций
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Java (Stream API, since Java 8), Scala, Kotlin
+            \item C\# (LINQ)
+            \item JavaScript
+            \item \textbf{Unix Pipes}! (Bash и другие оболочки)
+            \item F\#, Elixir, Clojure, Elm и другие функциональные языки
+            \item C++ (\texttt{std::ranges}, since C++ 20)
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Ленивые вычисления}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Scheme, Racket
+            \item Scala
+            \item Clojure
+            \item Отчасти в Java, C\# и C++ в рамках Stream API, LINQ и \texttt{std::ranges}
+        \end{itemize}
+    \end{block}
+    \begin{block}{Можно реализовать и самому}
+        \begin{itemize}
+            \item Как-то создать отложенные вычисления
+            \item Уметь запускать вычисления, когда они понадобятся
+            \item На самом деле много тонкостей (Haskell их учитывает)
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Алгебраические типы данных и сопоставление с образцом}
+    \begin{block}{Пример использования}
+        \begin{itemize}
+            \item Моделирование предметной области
+            \item Обработка сложных структур данных
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Языки семейства ML: Standard ML, OCaml (и F\#)
+            \item Rust
+            \item Scala
+            \item Kotlin
+            \item \textbf{Pattern-matching идёт в мейнстрим}:
+            \begin{itemize}
+                \item C\# 7.0
+                \item Java 16
+                \item Python 3.10 (!)
+            \end{itemize}
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Функторы}
+    \begin{block}{Пример использования}
+        \begin{itemize}
+            \item Обработка ситуаций, когда значения может не быть
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Kotlin
+            \item C\#
+            \item JavaScript
+            \item Scala
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Классы типов}
+    \begin{block}{Пример использования}
+        \begin{itemize}
+            \item Написание \textit{обобщённого} кода
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Scala
+            \item Rust
+            \item C++ 20 (concepts)
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Монады и их друзья}
+    \begin{block}{Пример использования}
+        \begin{itemize}
+            \item Моделирование последовательности вычислений
+            \item Моделирование вычислительных эффектов
+            \item Ввод-вывод
+            \item И не только...
+        \end{itemize}
+    \end{block}
+    \begin{block}{Где встречается}
+        \begin{itemize}
+            \item Scala (Cats, Cats Effect, ZIO, Scalaz)
+            \item Kotlin (Arrow)
+            \item PureScript, OCaml и другие функциональные языки
+        \end{itemize}
+    \end{block}
+\end{frame}
+\section{Q\&A}
+\end{document}

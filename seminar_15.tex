@@ -1,0 +1,94 @@
+\documentclass{beamer}
+\usetheme{metropolis}
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{minted}
+\usepackage{soul}
+
+\newcommand{\hs}[1]{\mintinline{haskell}{#1}}
+\newcommand{\bhs}[1]{\fbox{\mintinline{haskell}{#1}}}
+
+\title{Декларативное программирование}
+\subtitle{Семинар №15, группа 22215}
+\author{Завьялов А.А.}
+\date{12 декабря 2022 г.}
+\institute{Кафедра систем информатики ФИТ НГУ}
+\begin{document}
+  \maketitle
+\begin{frame}[fragile]{Обработка ошибок в Haskell}
+\begin{block}{Что произойдёт, если ввести ''hello''?}
+\begin{minted}{haskell}
+main = do
+  x <- getLine
+  True <- return $ length x == 10
+  putStrLn x
+\end{minted}
+\end{block}
+\pause
+\begin{block}{Произойдёт}    
+\begin{minted}{haskell}
+*** Exception: user error
+    (Pattern match failure in do expression)
+\end{minted}
+\end{block}
+\pause
+\begin{center}
+\textbf{Q: Почему?} \pause
+\\
+A: Давайте обратимся к документации
+\end{center}
+\end{frame}
+\begin{frame}{Исключения в Haskell}
+    Модуль \hs{Control.Exception}
+    \begin{block}{Полезные функции}
+        \begin{itemize}
+            \item \hs{catch :: Exception e=>IO a->(e->IO a)->IO a}
+            \item \hs{catches :: IO a -> [Handler a] -> IO a}
+            \item \hs{try :: Exception e => IO a -> IO (Either e a)}
+            \item \hs{evaluate :: a -> IO a}
+            \item \hs{throwIO :: Exception e => e -> IO a}
+            \item \hs{handle}, \hs{handles}, ...
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}[fragile]{Тип данных \texttt{Either}}
+\begin{minted}{haskell}
+data Either a b
+  = Left a
+  | Right b
+\end{minted}
+    \begin{itemize}
+        \item ''Левое значение'' -- ошибка
+        \item ''Правое значение'' -- результат
+        \item \textit{Реализует класс типов \texttt{Monad}}
+    \end{itemize}
+    \begin{block}{Полезные функции}
+        \begin{itemize}
+            \item \hs{either :: (a->c)->(b->c) -> Either a b -> c}
+            \item \hs{lefts :: [Either a b] -> [a]}, \hs{rights}
+            \item \hs{fromRight :: b -> Either a b -> b}, \hs{fromLeft}
+        \end{itemize}
+    \end{block}
+\end{frame}
+\begin{frame}{Тестирование программ на Haskell}
+    \begin{block}{Виды тестирования}
+        \begin{itemize}
+            \item \pause Ручное
+            \item \pause Автоматизированное
+            \begin{itemize}
+                \item \pause Юнит-тестирование
+                \item \pause Проверка свойств (property-based testing)
+            \end{itemize}
+        \end{itemize}
+    \end{block}
+    \pause
+    \begin{block}{Фреймворки для тестирования}
+        \begin{itemize}
+            \item HUnit
+            \item QuickCheck
+        \end{itemize}
+    \end{block}
+\end{frame}
+\section{Q\&A}
+\end{document}
